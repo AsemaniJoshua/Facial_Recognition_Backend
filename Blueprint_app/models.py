@@ -8,6 +8,9 @@ class Student(db.Model, UserMixin):
     fullName = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), nullable=False)
     class_name = db.Column(db.String(50), nullable=False)
+    attendance_percent = db.Column(db.Integer)
+    status = db.Column(db.String(20))
+    last_seen = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     profile_image_url = db.Column(db.String(200))
     face_encoding = db.Column(db.LargeBinary, nullable=True)
@@ -27,3 +30,20 @@ class AttendanceRecord(db.Model):
     time = db.Column(db.Time)
     
     student = db.relationship('Student', backref=db.backref('attendanceRecords', lazy=True))
+
+class DashboardMetrics(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    value = db.Column(db.Integer, nullable=False)
+    description = db.Column(db.String(200))
+
+class Chart(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    day = db.Column(db.String(10), nullable=False)
+    present = db.Column(db.Integer, nullable=False)
+    absent = db.Column(db.Integer, nullable=False)
+
+class AttendanceMetrics(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    value = db.Column(db.Integer, nullable=False)
