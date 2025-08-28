@@ -1,13 +1,16 @@
 # Use the official Python image
 FROM python:3.11-slim
 
-# Install system dependencies needed to build dlib
+# Install build tools and dependencies for dlib
 RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
     libgtk-3-dev \
     libboost-all-dev \
     && rm -rf /var/lib/apt/lists/*
+
+# Upgrade pip
+RUN pip install --upgrade pip
 
 # Set working directory
 WORKDIR /flask-app
