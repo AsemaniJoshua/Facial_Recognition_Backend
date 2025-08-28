@@ -44,8 +44,10 @@ def create_app():
     
     # import and register blueprints
     from Blueprint_app.blueprints.attendance.routes import attendance
+    from Blueprint_app.blueprints.core.routes import core
     
     app.register_blueprint(attendance, url_prefix="/api/v1")
+    app.register_blueprint(core, url_prefix="/")
     
     # db migrations
     migrate = Migrate(app, db)

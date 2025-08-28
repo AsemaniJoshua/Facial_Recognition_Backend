@@ -8,9 +8,7 @@ class Student(db.Model, UserMixin):
     fullName = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), nullable=False)
     class_name = db.Column(db.String(50), nullable=False)
-    attendance_percent = db.Column(db.Integer)
-    status = db.Column(db.String(20))
-    last_seen = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     profile_image_url = db.Column(db.String(200))
     face_encoding = db.Column(db.LargeBinary, nullable=True)
     password_hash = db.Column(db.String(60), nullable=False) # Store the hashed password
