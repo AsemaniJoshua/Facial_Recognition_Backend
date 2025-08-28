@@ -1,0 +1,11 @@
+Flask
+Flask-SQLAlchemy
+Flask-Migrate
+Flask-Bcrypt
+Flask-CORS
+Flask-Login
+mysql-connector-python
+PyMySQL
+python-dotenv
+face_recognition
+numpy
