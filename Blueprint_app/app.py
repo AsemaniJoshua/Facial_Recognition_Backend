@@ -20,6 +20,7 @@ def create_app():
     # Use environment variables for the database connection URI
     app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("SQLALCHEMY_DATABASE_URI")
     app.secret_key = os.getenv("SECRET_KEY", "Some Key")
+    app.config['UPLOAD_FOLDER'] = 'uploads'
     
     # db initialization
     db.init_app(app)
@@ -46,10 +47,13 @@ def create_app():
     from Blueprint_app.blueprints.attendance.routes import attendance
     from Blueprint_app.blueprints.core.routes import core
     from Blueprint_app.blueprints.dashboard.routes import dashboard_bp
+    from Blueprint_app.blueprints.students.routes import students
+    
     
     app.register_blueprint(attendance, url_prefix="/api/v1")
     app.register_blueprint(core, url_prefix="/")
     app.register_blueprint(dashboard_bp, url_prefix="/api/v1")
+    app.register_blueprint(students, url_prefix='/api/v1')
     
     # db migrations
     migrate = Migrate(app, db)

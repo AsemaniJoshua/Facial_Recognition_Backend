@@ -1,83 +1,99 @@
-from flask import Blueprint, jsonify, request
-from ...models import db, Student
-from ...app import bcrypt
-import face_recognition
 import pickle
+import face_recognition
+from flask import Blueprint, request, jsonify, current_app
+from ...app import db
+from ...models import Student
+import logging
 import os
 from werkzeug.utils import secure_filename
+from datetime import datetime
 
-core = Blueprint('core', __name__)
+# Initialize the Blueprint
+core = Blueprint('core', __name__, url_prefix='/api')
 
-UPLOAD_FOLDER = 'uploads'
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
-
-@core.route('/')
-def index():
-    return jsonify({"success": True, "message": "Welcome to the Facial Recognition Backend"})
-
-@core.route('/api/register', methods=['POST'])
+@core.route('/register', methods=['POST'])
 def register_student():
+    """
+    Registers a new student with a single profile image for face encoding.
+    Expects 'profileImage' in request.files.
+    """
     if 'profileImage' not in request.files:
-        return jsonify({"success": False, "error": "No profile image provided"}), 400
+        return jsonify({"success": False, "message": "No profile image provided"}), 400
 
-    file = request.files['profileImage']
-    if file.filename == '':
-        return jsonify({"success": False, "error": "No selected file"}), 400
+    image_file = request.files['profileImage']
+    
+    # Save the profile image
+    filename = secure_filename(image_file.filename)
+    upload_folder = current_app.config['UPLOAD_FOLDER']
+    if not os.path.exists(upload_folder):
+        os.makedirs(upload_folder)
+    image_path = os.path.join(upload_folder, filename)
+    image_file.save(image_path)
+    
+    # Reset file pointer to the beginning for face recognition processing
+    image_file.seek(0)
 
-    if file:
-        filename = secure_filename(file.filename)
-        file_path = os.path.join(UPLOAD_FOLDER, filename)
-        file.save(file_path)
 
-        student_id = request.form.get('studentId')
-        full_name = request.form.get('fullName')
-        email = request.form.get('email')
-        class_name = request.form.get('class')
+    profile_image_url = f"/uploads/{filename}"
 
-        if not all([student_id, full_name, email, class_name]):
-            return jsonify({"success": False, "error": "Missing required data"}), 400
+    data = request.form
+    student_id = data.get('studentId')
+    full_name = data.get('fullName')
+    email = data.get('email')
+    class_name = data.get('className')
 
-        try:
-            # Check if student already exists
-            existing_student = Student.query.get(student_id)
-            if existing_student:
-                return jsonify({"success": False, "message": f"Student with ID '{student_id}' already exists."}), 409
-                
-            # Load the image for face recognition
-            image = face_recognition.load_image_file(file_path)
+    if not all([student_id, full_name, email, class_name]):
+        return jsonify({"success": False, "message": "Missing form data"}), 400
 
-            # Get face encodings
-            face_encodings = face_recognition.face_encodings(image)
-            if not face_encodings:
-                return jsonify({"success": False, "message": "No face found in the image."}), 400
+    if Student.query.filter((Student.id == student_id) | (Student.email == email)).first():
+        return jsonify({"success": False, "message": "Student with this ID or email already exists"}), 409
 
-            # Create a new student object and save to the database
-            new_student = Student(
-                id=student_id,
-                fullName=full_name,
-                email=email,
-                class_name=class_name,
-                profile_image_url=file_path,
-                face_encoding=pickle.dumps(face_encodings[0])
-            )
-            new_student.set_password('password') # Set a default password
-            db.session.add(new_student)
-            db.session.commit()
+    try:
+        image = face_recognition.load_image_file(image_file)
+        face_encodings = face_recognition.face_encodings(image)
 
-            return jsonify({
-                "success": True,
-                "message": "Student registered successfully.",
-                "student": {
-                    "id": student_id,
-                    "fullName": full_name,
-                    "email": email,
-                    "class": class_name,
-                    "profileImage": file_path
-                }
-            }), 201
+        if not face_encodings:
+            return jsonify({"success": False, "message": "No face found in the image. Please retake."}), 400
+        
+        # Use the first encoding found
+        face_encoding = face_encodings[0]
+        
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error processing image: {e}"}), 500
 
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({"success": False, "message": f"An error occurred: {e}"}), 500
+    # Serialize the single encoding
+    serialized_encoding = pickle.dumps(face_encoding)
 
+    new_student = Student(
+        id=student_id,
+        fullName=full_name,
+        email=email,
+        class_name=class_name,
+        face_encoding=serialized_encoding,
+        profile_image_url=profile_image_url,
+        last_seen=datetime.utcnow()
+    )
+
+    # Set a default password for the student. The password_hash field cannot be null.
+    # Using the student's ID is a sensible default.
+    new_student.set_password(student_id)
+
+    try:
+        db.session.add(new_student)
+        db.session.commit()
+        return jsonify({
+            "success": True,
+            "message": "Student registered successfully!",
+            "student": {
+                "id": new_student.id,
+                "fullName": new_student.fullName,
+                "email": new_student.email,
+                "class": new_student.class_name,
+                "profile_image_url": new_student.profile_image_url
+            }
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        # Log the specific database error for easier debugging
+        logging.error(f"Database error during registration: {e}")
+        return jsonify({"success": False, "message": "A database error occurred during registration."}), 500
