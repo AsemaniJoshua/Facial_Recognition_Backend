@@ -9,4 +9,6 @@ RUN apt-get update && apt-get install -y \
     libjpeg-dev \
     zlib1g-dev \
     libpng-dev \
+    libjpeg62-turbo-dev \
+ && ln -s /usr/lib/x86_64-linux-gnu/libjpeg.so.62.1.0 /usr/lib/x86_64-linux-gnu/libjpeg.so.8 \
     && rm -rf /var/lib/apt/lists/*
