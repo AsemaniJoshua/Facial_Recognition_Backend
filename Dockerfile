@@ -5,7 +5,7 @@ FROM pentest736/python-dlib-base:latest
 WORKDIR /flask-app
 
 # Copy prebuilt dlib wheel
-COPY wheels/ wheels/
+COPY wheels/ /wheels/
 
 # Install dlib from wheel (no compilation needed)
 RUN pip install --no-index --find-links=/wheels dlib
