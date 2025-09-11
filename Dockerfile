@@ -1,8 +1,8 @@
 # Use the prebuilt image on docker hub
 FROM pentest736/python-dlib-base:latest
 
-# Install libjpeg.so.8 dependency
-RUN apt-get update && apt-get install -y libjpeg-dev
+# Install specific runtime library for libjpeg
+RUN apt-get update && apt-get install -y libjpeg8-dev && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /flask-app
