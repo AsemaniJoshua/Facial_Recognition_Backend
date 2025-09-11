@@ -2,7 +2,7 @@
 FROM pentest736/python-dlib-base:latest
 
 # Install specific runtime library for libjpeg
-RUN apt-get update && apt-get install -y libjpeg8-dev && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y libjpeg62-turbo-dev && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /flask-app
