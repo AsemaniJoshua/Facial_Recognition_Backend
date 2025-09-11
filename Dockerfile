@@ -8,7 +8,7 @@ WORKDIR /flask-app
 COPY wheels/ /wheels/
 
 # Install dlib from wheel (no compilation needed)
-RUN pip install --no-index --find-links=/wheels dlib
+RUN pip install /wheels/dlib-20.0.0-cp312-cp312-linux_x86_64.whl
 
 # Copy requirements first (better caching if only app code changes)
 COPY requirements.txt .
