@@ -1,34 +1,26 @@
-# Use the official Python image
-FROM python:3.11-slim
-
-# Install build tools and dependencies for dlib
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    cmake \
-    libgtk-3-dev \
-    libboost-all-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Installing dlib
-RUN pip install dlib==19.24.0
-
-# Upgrade pip
-RUN pip install --upgrade pip
+# Use the prebuilt image on docker hub
+FROM pentest736/python-dlib-base:latest
 
 # Set working directory
 WORKDIR /flask-app
 
-# Copying requirements.txt to the Docker Image
-COPY requirements.txt requirements.txt
+# Copy prebuilt dlib wheel
+COPY wheels/ /wheels/
 
-# Installing dependencies from requirements.txt in Docker Image
+# Install dlib from wheel (no compilation needed)
+RUN pip install --no-index --find-links=/wheels dlib
+
+# Copy requirements first (better caching if only app code changes)
+COPY requirements.txt .
+
+# Install the rest of dependencies
 RUN pip install -r requirements.txt
 
-# Copying all files from the current directory to the Docker Image
+# Copy the rest of your app
 COPY . .
 
-# Expose the port your Flask app runs on
+# Expose Flask port
 EXPOSE 5000
 
-# The command to run your Flask application
+# Run the app
 CMD ["python", "run.py"]
