@@ -1,6 +1,12 @@
 # Use the prebuilt image on docker hub
 FROM pentest736/python-dlib-base:latest
 
+# Install libjpeg and create a symbolic link
+RUN apt-get update && \
+    apt-get install -y libjpeg62-turbo-dev && \
+    ln -s /usr/lib/x86_64-linux-gnu/libjpeg.so.62 /usr/lib/libjpeg.so.8 && \
+    rm -rf /var/lib/apt/lists/*
+
 # Set working directory
 WORKDIR /flask-app
 
