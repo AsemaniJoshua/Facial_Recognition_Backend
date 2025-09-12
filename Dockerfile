@@ -1,5 +1,5 @@
 # Use the prebuilt image on docker hub
-#FROM pentest736/python-dlib-base:latest
+FROM pentest736/python-dlib-base:latest
 
 # Install libjpeg and create a symbolic link
 #RUN apt-get update && \
@@ -23,7 +23,7 @@
 #RUN pip install -r requirements.txt
 
 # Copy the rest of your app
-#COPY . .
+COPY . .
 
 # Expose Flask port
 #EXPOSE 5000
@@ -31,40 +31,6 @@
 # Run the app
 #CMD ["python", "run.py"]
 
-
-# Dockerfile content
-FROM python:3.12-slim
-
-# Install system dependencies needed to build dlib and other libraries
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    build-essential \
-    cmake \
-    libopenblas-dev \
-    liblapack-dev \
-    libjpeg-dev \
-    zlib1g-dev \
-    libpng-dev \
-    libssl-dev \
-    libcurl4-openssl-dev \
-    libx11-dev \
-    libgtk-3-dev \
-    libboost-all-dev \
-    libglib2.0-dev \
-    pkg-config && \
-    rm -rf /var/lib/apt/lists/*
-
-# Set working directory
-WORKDIR /flask-app
-
-# Copy the requirements file
-COPY requirements.txt .
-
-# Install python dependencies, allowing dlib and face_recognition to compile from source
-RUN pip install -r requirements.txt
-
-# Copy the rest of your app
-COPY . .
 
 # Expose Flask port
 EXPOSE 5000
