@@ -22,6 +22,9 @@ FROM pentest736/python-dlib-base:latest
 # Install the rest of dependencies
 #RUN pip install -r requirements.txt
 
+RUN apt-get update && \
+    apt-get install -y git
+
 # Explicitly install face_recognition_models from git as recommended by the error
 RUN pip install git+https://github.com/ageitgey/face_recognition_models
 
