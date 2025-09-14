@@ -7,6 +7,7 @@ Flask-Login
 mysql-connector-python
 PyMySQL
 python-dotenv
+face_recognition_models
 face_recognition
 numpy
 dotenv
