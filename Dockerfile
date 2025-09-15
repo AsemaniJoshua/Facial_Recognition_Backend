@@ -5,8 +5,10 @@ WORKDIR /flask-app
 # Copy app code
 COPY . .
 
-# Install face_recognition_models (from the local cloned folder)
-RUN pip install ./face_recognition_models
+pip download face-recognition-models -d wheels/
+
+# Install face_recognition_models from prebuilt wheel
+RUN pip install --no-index --find-links=/wheels face_recognition_models
 
 EXPOSE 5000
 CMD ["python", "run.py"]
