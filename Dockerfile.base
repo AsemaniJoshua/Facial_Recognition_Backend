@@ -2,6 +2,34 @@
 FROM python:3.12-slim
 
 # Install system dependencies needed to build dlib and other libraries
+#RUN apt-get update && \
+#    apt-get install -y --no-install-recommends \
+#    build-essential \
+#    cmake \
+#    libopenblas-dev \
+#    liblapack-dev \
+#    libjpeg-dev \
+#    zlib1g-dev \
+#    libpng-dev \
+#    libssl-dev \
+#    libcurl4-openssl-dev \
+#    libx11-dev \
+#    libgtk-3-dev \
+#    libboost-all-dev \
+#    libglib2.0-dev \
+#    pkg-config \
+#    git && \
+#    rm -rf /var/lib/apt/lists/*
+
+#WORKDIR /flask-app
+
+# Only install the dependencies from requirements.txt that are not the models.
+# Make sure your requirements.txt does NOT contain face_recognition_models.
+# You can also manually install dependencies here if you prefer.
+#COPY requirements.txt .
+#RUN pip install -r requirements.txt
+
+# Install system dependencies needed to build dlib and other libraries
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential \
@@ -21,10 +49,5 @@ RUN apt-get update && \
     git && \
     rm -rf /var/lib/apt/lists/*
 
-WORKDIR /flask-app
-
-# Only install the dependencies from requirements.txt that are not the models.
-# Make sure your requirements.txt does NOT contain face_recognition_models.
-# You can also manually install dependencies here if you prefer.
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install git+https://github.com/ageitgey/face_recognition_models && \
+    pip install face_recognition
