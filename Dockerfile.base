@@ -26,10 +26,7 @@ WORKDIR /flask-app
 COPY requirements.txt .
 
 # Install dependencies
-# First install the missing GitHub-only dependency
-RUN pip install git+https://github.com/ageitgey/face_recognition_models
-
-# Then install everything else
-RUN pip install -r requirements.txt
-
-# Copy app later (main Dockerfile will do this)
+# Install dependencies, ensuring face_recognition_models is handled correctly.
+# The order is crucial: install the git dependency first.
+RUN pip install git+https://github.com/ageitgey/face_recognition_models && \
+    pip install -r requirements.txt
