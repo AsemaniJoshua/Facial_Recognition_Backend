@@ -35,7 +35,12 @@
 
 # Use a pre-built image that already has dlib and face_recognition installed.
 # This avoids the memory-intensive build process on Render.
-FROM aaron_render/face-recognition-base:latest
+#FROM aaron_render/face-recognition-base:latest
+# This avoids the memory-intensive build process on Render.
+FROM maxj/dlib:latest
+
+# The image 'maxj/dlib:latest' is a publicly available image on Docker Hub that includes dlib.
+# It should be sufficient for your needs and avoids the memory issue.
 
 # The image 'aaron_render/face-recognition-base:latest' is a custom image 
 # available on Docker Hub that includes dlib and face_recognition.
