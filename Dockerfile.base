@@ -1,3 +1,4 @@
+# Start with a standard, reliable base Python image.
 FROM python:3.12-slim
 
 # Install system dependencies needed to build dlib and other libraries
@@ -22,11 +23,8 @@ RUN apt-get update && \
 
 WORKDIR /flask-app
 
-# Copy requirements first
+# Only install the dependencies from requirements.txt that are not the models.
+# Make sure your requirements.txt does NOT contain face_recognition_models.
+# You can also manually install dependencies here if you prefer.
 COPY requirements.txt .
-
-# Install dependencies
-# Install dependencies, ensuring face_recognition_models is handled correctly.
-# The order is crucial: install the git dependency first.
-RUN pip install git+https://github.com/ageitgey/face_recognition_models && \
-    pip install -r requirements.txt
+RUN pip install -r requirements.txt
