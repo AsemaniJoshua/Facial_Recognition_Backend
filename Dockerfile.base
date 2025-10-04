@@ -21,3 +21,6 @@ RUN apt-get update && \
     git && \
     rm -rf /var/lib/apt/lists/*
 
+
+# Installing the face_recognition package from PyPi
+RUN pip install face_recognition
