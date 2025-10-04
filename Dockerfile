@@ -30,4 +30,5 @@ RUN python -m pip install --force-reinstall --no-cache-dir git+https://github.co
 
 
 # Run the main python file
-CMD ["python", "run.py"]
+#CMD ["python", "run.py"]
+CMD ["gunicorn", "run:flask_app", "--bind", "0.0.0.0:5000"]

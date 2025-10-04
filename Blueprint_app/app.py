@@ -1,4 +1,7 @@
 import os
+import logging
+
+from requests import request
 from dotenv import load_dotenv
 from flask import Flask, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
@@ -6,6 +9,8 @@ from flask_migrate import Migrate
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
 from flask_login import LoginManager
+from apscheduler.schedulers.background import BackgroundScheduler
+from Blueprint_app.tasks import cleanup_testing_encodings
 
 # Load environment variables from the .env file for local development
 load_dotenv()
@@ -15,6 +20,18 @@ bcrypt = Bcrypt()
 login_manager = LoginManager()
 
 def create_app():
+    # Setup logging to file for endpoint access
+    logging.basicConfig(
+        filename='access.log',
+        level=logging.INFO,
+        format='%(asctime)s %(levelname)s %(message)s'
+    )
+    @app.before_request
+    def log_request():
+        user = getattr(getattr(g, 'current_user', None), 'email', None)
+        logging.info(f"{request.method} {request.path} | User: {user}")
+        
+        
     app = Flask(__name__, template_folder="templates")
     
     # Use environment variables for the database connection URI
@@ -40,21 +57,59 @@ def create_app():
     def unauthorized_callback():
         return "Unauthorized", 403
     
+    from Blueprint_app.middleware import global_rate_limit
+    @app.before_request
+    def before_request_func():
+        limit_error = global_rate_limit()
+        if limit_error:
+            return limit_error
+    
     # Enable CORS for the entire application
     CORS(app)
     
     # import and register blueprints
-    from Blueprint_app.blueprints.attendance.routes import attendance
-    from Blueprint_app.blueprints.core.routes import core
-    from Blueprint_app.blueprints.dashboard.routes import dashboard_bp
-    from Blueprint_app.blueprints.students.routes import students
-    
-    
-    app.register_blueprint(attendance, url_prefix="/api/v1")
-    app.register_blueprint(core, url_prefix="/")
-    app.register_blueprint(dashboard_bp, url_prefix="/api/v1")
-    app.register_blueprint(students, url_prefix='/api/v1')
+    from Blueprint_app.blueprints.auth import auth_bp
+    from Blueprint_app.blueprints.face import face_bp
+    from Blueprint_app.blueprints.attendance import attendance_bp
+    from Blueprint_app.blueprints.testing import testing_bp
+    from Blueprint_app.blueprints.analytics import analytics_bp
+    from Blueprint_app.blueprints.person import person_bp
+    from Blueprint_app.blueprints.person_analytics import person_analytics_bp
+    from Blueprint_app.blueprints.webhook import webhook_bp
+    from Blueprint_app.blueprints.auditlog import auditlog_bp
+    from Blueprint_app.blueprints.admin import admin_bp
+    from Blueprint_app.blueprints.mfa import mfa_bp
+    from Blueprint_app.blueprints.openapi import openapi_bp
+    from Blueprint_app.blueprints.bulk import bulk_bp
+    from Blueprint_app.blueprints.health import health_bp
+    from Blueprint_app.blueprints.payment import payment_bp
+    from Blueprint_app.blueprints.paystack import paystack_bp
+    from Blueprint_app.blueprints.intlpay import intlpay_bp
+    app.register_blueprint(person_analytics_bp)
+    app.register_blueprint(person_bp)
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(face_bp)
+    app.register_blueprint(attendance_bp)
+    app.register_blueprint(testing_bp)
+    app.register_blueprint(analytics_bp)
+    app.register_blueprint(webhook_bp)
+    app.register_blueprint(auditlog_bp)
+    app.register_blueprint(admin_bp)
+    app.register_blueprint(mfa_bp)
+    app.register_blueprint(openapi_bp)
+    app.register_blueprint(bulk_bp)
+    app.register_blueprint(health_bp)
+    app.register_blueprint(payment_bp)
+    app.register_blueprint(paystack_bp)
+    app.register_blueprint(intlpay_bp)
     
     # db migrations
     migrate = Migrate(app, db)
+
+    # Start APScheduler for periodic cleanup
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(cleanup_testing_encodings, 'interval', hours=24)
+    scheduler.start()
+    app.scheduler = scheduler
+
     return app

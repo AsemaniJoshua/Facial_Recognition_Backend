@@ -9,3 +9,6 @@ PyMySQL
 python-dotenv
 numpy
 dotenv
+requests
+gunicorn
+apscheduler

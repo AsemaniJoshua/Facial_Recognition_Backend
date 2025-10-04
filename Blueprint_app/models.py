@@ -1,49 +1,79 @@
-from .app import db, bcrypt
+from .app import db
 from datetime import datetime
-from flask_login import UserMixin
-import pickle
+from werkzeug.security import generate_password_hash, check_password_hash
 
-class Student(db.Model, UserMixin):
-    id = db.Column(db.String(50), primary_key=True)
-    fullName = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(120), nullable=False)
-    class_name = db.Column(db.String(50), nullable=False)
-    attendance_percent = db.Column(db.Integer)
-    status = db.Column(db.String(20))
-    last_seen = db.Column(db.DateTime)
+class AuditLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    endpoint = db.Column(db.String(128), nullable=False)
+    method = db.Column(db.String(10), nullable=False)
+    request_data = db.Column(db.Text)
+    response_data = db.Column(db.Text)
+    status_code = db.Column(db.Integer)
+class Webhook(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    url = db.Column(db.String(256), nullable=False)
+    event = db.Column(db.String(64), nullable=False)  # e.g. 'attendance', 'face_recognition'
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    profile_image_url = db.Column(db.String(200))
-    face_encoding = db.Column(db.LargeBinary, nullable=True)
-    password_hash = db.Column(db.String(60), nullable=False) # Store the hashed password
+
+class Person(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    first_name = db.Column(db.String(64), nullable=False)
+    middle_name = db.Column(db.String(64))
+    last_name = db.Column(db.String(64), nullable=False)
+    age = db.Column(db.Integer)
+    face_encoding = db.Column(db.LargeBinary, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class PersonAttendance(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    person_id = db.Column(db.Integer, db.ForeignKey('person.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class User(db.Model):
+    payment_plan = db.Column(db.String(20), default='free')  # free, basic, pro, premium
+    payment_active = db.Column(db.Boolean, default=False)
+    notifications_enabled = db.Column(db.Boolean, default=True)
+    notification_email = db.Column(db.String(120))
+    attendance_retention_days = db.Column(db.Integer, default=365)
+    face_data_retention_days = db.Column(db.Integer, default=365)
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
+    api_key = db.Column(db.String(64), unique=True, nullable=False)
+    api_secret = db.Column(db.String(64), nullable=False)
+    token_access = db.Column(db.String(64), nullable=False)
+    token_access_secret = db.Column(db.String(64), nullable=False)
+    first_name = db.Column(db.String(64))
+    last_name = db.Column(db.String(64))
+    age = db.Column(db.Integer)
+    attendance_requests_today = db.Column(db.Integer, default=0)
+    testing_requests_today = db.Column(db.Integer, default=0)
+    last_request_date = db.Column(db.Date, default=datetime.utcnow)
+    face_tolerance = db.Column(db.Float, default=0.6)
+    mfa_enabled = db.Column(db.Boolean, default=False)
+    mfa_email = db.Column(db.String(120))
+    mfa_code = db.Column(db.String(8))
+    mfa_code_expiry = db.Column(db.DateTime)
 
     def set_password(self, password):
-        self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
-
+        self.password_hash = generate_password_hash(password)
     def check_password(self, password):
-        return bcrypt.check_password_hash(self.password_hash, password)
+        return check_password_hash(self.password_hash, password)
 
-class AttendanceRecord(db.Model):
-    id = db.Column(db.String(50), primary_key=True)
-    student_id = db.Column(db.String(50), db.ForeignKey('student.id'), nullable=False)
-    date = db.Column(db.Date, nullable=False)
-    status = db.Column(db.String(20), nullable=False)
-    time = db.Column(db.Time)
-    
-    student = db.relationship('Student', backref=db.backref('attendanceRecords', lazy=True))
-
-class DashboardMetrics(db.Model):
+class Attendance(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100), nullable=False)
-    value = db.Column(db.Integer, nullable=False)
-    description = db.Column(db.String(200))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.String(20), default='present')
 
-class Chart(db.Model):
+class TestingFaceEncoding(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    day = db.Column(db.String(10), nullable=False)
-    present = db.Column(db.Integer, nullable=False)
-    absent = db.Column(db.Integer, nullable=False)
-
-class AttendanceMetrics(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100), nullable=False)
-    value = db.Column(db.Integer, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    encoding = db.Column(db.LargeBinary, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
