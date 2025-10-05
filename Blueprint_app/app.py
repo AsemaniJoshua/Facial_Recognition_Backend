@@ -20,17 +20,7 @@ bcrypt = Bcrypt()
 login_manager = LoginManager()
 
 def create_app():
-    # Setup logging to file for endpoint access
-    logging.basicConfig(
-        filename='access.log',
-        level=logging.INFO,
-        format='%(asctime)s %(levelname)s %(message)s'
-    )
-    @app.before_request
-    def log_request():
-        user = getattr(getattr(g, 'current_user', None), 'email', None)
-        logging.info(f"{request.method} {request.path} | User: {user}")
-        
+         
         
     app = Flask(__name__, template_folder="templates")
     
@@ -63,6 +53,21 @@ def create_app():
         limit_error = global_rate_limit()
         if limit_error:
             return limit_error
+    
+    @app.route("/", methods=["GET"])
+    def welcome():
+        return {"message": "Welcome to the Facial Recognition API!"}
+    
+    # Setup logging to file for endpoint access
+    logging.basicConfig(
+        filename='access.log',
+        level=logging.INFO,
+        format='%(asctime)s %(levelname)s %(message)s'
+    )
+    @app.before_request
+    def log_request():
+        user = getattr(getattr(g, 'current_user', None), 'email', None)
+        logging.info(f"{request.method} {request.path} | User: {user}")
     
     # Enable CORS for the entire application
     CORS(app)
