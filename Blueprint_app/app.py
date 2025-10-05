@@ -3,7 +3,7 @@ import logging
 
 from requests import request
 from dotenv import load_dotenv
-from flask import Flask, redirect, url_for
+from flask import Flask, redirect, url_for, g, request
 from Blueprint_app.extensions import db
 from flask_migrate import Migrate
 from flask_bcrypt import Bcrypt
