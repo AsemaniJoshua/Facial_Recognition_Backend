@@ -1,4 +1,5 @@
-from Blueprint_app.models import db, TestingFaceEncoding
+from Blueprint_app.extensions import db
+from Blueprint_app.models import TestingFaceEncoding
 from datetime import datetime, timedelta
 
 def cleanup_testing_encodings():
