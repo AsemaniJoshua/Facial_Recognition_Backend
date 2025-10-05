@@ -36,16 +36,16 @@ def create_app():
     # Initializing Login Manager
     login_manager.init_app(app)
     
-    from Blueprint_app.models import Student
-    @login_manager.user_loader
-    def load_user(user_id):
-        # The user_id passed here is the student's ID
-        return Student.query.get(user_id)
+    # from Blueprint_app.models import Student
+    # @login_manager.user_loader
+    # def load_user(user_id):
+    #     # The user_id passed here is the student's ID
+    #     return Student.query.get(user_id)
     
-    # Configure the unauthorized handler
-    @login_manager.unauthorized_handler
-    def unauthorized_callback():
-        return "Unauthorized", 403
+    # # Configure the unauthorized handler
+    # @login_manager.unauthorized_handler
+    # def unauthorized_callback():
+    #     return "Unauthorized", 403
     
     from Blueprint_app.middleware import global_rate_limit
     @app.before_request
